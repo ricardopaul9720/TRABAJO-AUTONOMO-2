@@ -1,0 +1,119 @@
+import tkinter as tk
+import random
+
+# Diccionario de categorías con sus palabras
+categorias = {
+    "PAISES": ["ecuador", "mexico", "peru", "chile", "argentina", "brasil", "canada"],
+    "COLORES": ["rojo", "azul", "verde", "amarillo", "negro", "blanco", "morado"],
+    "COSAS": ["mesa", "silla", "puerta", "coche", "lapiz", "libro", "telefono"],
+    "COMIDA": ["pan", "arroz", "pollo", "pizza", "taco", "hamburguesa", "ensalada"]
+}
+
+# Variables globales
+palabra = ""
+letras_adivinadas = []
+intentos_restantes = 6
+ultima_categoria = None  # Guardar la última categoría seleccionada
+
+# Función para iniciar juego con categoría seleccionada
+def iniciar_juego(categoria):
+    global palabra, letras_adivinadas, intentos_restantes, ultima_categoria
+    ultima_categoria = categoria  # Guardamos la categoría
+    palabra = random.choice(categorias[categoria])
+    letras_adivinadas = ["_"] * len(palabra)
+    intentos_restantes = 6
+
+    # Actualizar interfaz
+    resultado.config(text=" ".join(letras_adivinadas))
+    intentos_label.config(text=f"Intentos restantes: {intentos_restantes}")
+    boton_intentar.config(state=tk.NORMAL)
+    boton_reintentar.pack_forget()  # ocultar botón de reintento si estaba visible
+    canvas.delete("all")  # limpiar dibujo
+
+# Función para dibujar el ahorcado
+def dibujar_ahorcado(intentos):
+    if intentos == 5:
+        canvas.create_line(20, 180, 120, 180, width=3)  # base
+    elif intentos == 4:
+        canvas.create_line(70, 180, 70, 20, width=3)    # poste vertical
+    elif intentos == 3:
+        canvas.create_line(70, 20, 150, 20, width=3)    # barra superior
+    elif intentos == 2:
+        canvas.create_line(150, 20, 150, 40, width=3)   # cuerda
+        canvas.create_oval(135, 40, 165, 70, width=3)   # cabeza
+    elif intentos == 1:
+        canvas.create_line(150, 70, 150, 120, width=3)  # cuerpo
+    elif intentos == 0:
+        canvas.create_line(150, 80, 130, 100, width=3)  # brazo izq
+        canvas.create_line(150, 80, 170, 100, width=3)  # brazo der
+        canvas.create_line(150, 120, 130, 150, width=3) # pierna izq
+        canvas.create_line(150, 120, 170, 150, width=3) # pierna der
+
+# Función para procesar intento
+def intentar():
+    global intentos_restantes
+    letra = entrada.get().lower()
+    entrada.delete(0, tk.END)
+
+    if letra in palabra:
+        for i, l in enumerate(palabra):
+            if l == letra:
+                letras_adivinadas[i] = letra
+        resultado.config(text=" ".join(letras_adivinadas))
+    else:
+        intentos_restantes -= 1
+        intentos_label.config(text=f"Intentos restantes: {intentos_restantes}")
+        dibujar_ahorcado(intentos_restantes)
+
+    # Verificar victoria o derrota
+    if "_" not in letras_adivinadas:
+        resultado.config(text=f"¡Ganaste! La palabra era: {palabra}")
+        boton_intentar.config(state=tk.DISABLED)
+        boton_reintentar.pack(pady=10)  # mostrar botón de reintento
+    elif intentos_restantes == 0:
+        resultado.config(text=f"Perdiste 😢 La palabra era: {palabra}")
+        boton_intentar.config(state=tk.DISABLED)
+        boton_reintentar.pack(pady=10)  # mostrar botón de reintento
+
+# Función para reintentar con la última categoría
+def volver_a_intentar():
+    if ultima_categoria:
+        iniciar_juego(ultima_categoria)
+
+# Crear ventana
+ventana = tk.Tk()
+ventana.title("Juego del Ahorcado")
+ventana.geometry("800x700")
+
+titulo = tk.Label(ventana, text="🎲 Juego del Ahorcado", font=("Arial", 16))
+titulo.pack(pady=10)
+
+# Botones de categorías
+frame_categorias = tk.Frame(ventana)
+frame_categorias.pack(pady=10)
+
+tk.Button(frame_categorias, text="PAISES", command=lambda: iniciar_juego("PAISES")).pack(side=tk.LEFT, padx=5)
+tk.Button(frame_categorias, text="COLORES", command=lambda: iniciar_juego("COLORES")).pack(side=tk.LEFT, padx=5)
+tk.Button(frame_categorias, text="COSAS", command=lambda: iniciar_juego("COSAS")).pack(side=tk.LEFT, padx=5)
+tk.Button(frame_categorias, text="COMIDA", command=lambda: iniciar_juego("COMIDA")).pack(side=tk.LEFT, padx=5)
+
+resultado = tk.Label(ventana, text="", font=("Arial", 20))
+resultado.pack(pady=20)
+
+intentos_label = tk.Label(ventana, text=f"Intentos restantes: {intentos_restantes}", font=("Arial", 12))
+intentos_label.pack(pady=10)
+
+entrada = tk.Entry(ventana, font=("Arial", 14))
+entrada.pack(pady=10)
+
+boton_intentar = tk.Button(ventana, text="Intentar", command=intentar, font=("Arial", 12), state=tk.DISABLED)
+boton_intentar.pack(pady=10)
+
+# Botón de reintento (inicialmente oculto)
+boton_reintentar = tk.Button(ventana, text="Volver a intentar", font=("Arial", 12), command=volver_a_intentar)
+
+# Canvas dibujar 
+canvas = tk.Canvas(ventana, width=300, height=200, bg="white")
+canvas.pack(pady=20)
+
+ventana.mainloop()
